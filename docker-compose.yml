@@ -1,0 +1,25 @@
+services:
+  app:
+    container_name: StreamerNotify
+    build: .
+    environment:
+      TELEGRAM_TOKEN: "YOUR_TELEGRAM_TOKEN"
+      TELEGRAM_CHATID: "YOUR_TELEGRAM_CHAT_ID"
+      ENABLE_TWITCH: "true"
+      TWITCH_CLIENT_ID: "YOUR_TWITCH_CLIENT_ID"
+      TWITCH_CLIENT_SECRET: "YOUR_TWITCH_CLIENT_SECRET"
+      TWITCH_STREAMERS: "YOUR_TWITCH_STREAMERS,YOUR_TWITCH_STREAMERS_2"
+      ENABLE_KICK: "true"
+      KICK_CLIENT_ID: "YOUR_KICK_CLIENT_ID"
+      KICK_CLIENT_SECRET: "YOUR_KICK_CLIENT_SECRET"
+      KICK_STREAMERS: "YOUR_KICK_STREAMERS,YOUR_KICK_STREAMERS_2"
+      ENABLE_DISCORD: "true"
+      DISCORD_WEBHOOK_URLS: "YOUR_DISCORD_WEBHOOK_URL"
+      MESSAGE_TEMPLATE: |
+        👤 Streamer: *{user_name}*
+        🎮 Currently playing: *{game_name}*
+        👀 Viewers: *{viewer_count}*
+
+        🔴 [Watch on {platform}]({user_url})
+    network_mode: bridge
+    restart: unless-stopped
