@@ -1,101 +1,141 @@
 # StreamerNotify
 
-A bot that monitors the status of Twitch and Kick streams and sends notifications via Telegram.
+**StreamerNotify** is a Node.js service to monitor streamers on Twitch and Kick, sending notifications via Telegram **and** Discord.  
+Ideal for running in Docker to automatically receive alerts when your favorite streamers go live!
+
+---
 
 ## Features
 
-- Monitors multiple Twitch and Kick streamers simultaneously.
-- Sends customizable Telegram notifications when a streamer goes live.
-- Platform support can be enabled or disabled individually via environment variables.
-- Dockerized for hassle-free deployment.
+- Monitor multiple Twitch and Kick streamers in parallel
+- Notifications via Telegram (bot) and Discord (webhook)
+- Colorful, readable logs (with Chalk)
+- Built-in `/health` HTTP endpoint for service monitoring
+- Easy configuration via Docker Compose environment variables
+- Modular, easily extendable, and Docker-ready
 
-## Prerequisites
+---
 
-- Docker
-- Docker Compose
+## Example Notification
 
-## Cloning the Repository
+```
+👤 Streamer: *roshtein*
+🎮 Currently playing: *Slots & Casino*
+👀 Viewers: *12502*
 
-Clone the repository to your local machine:
+🔴 [Watch on Kick](https://kick.com/roshtein)
+```
+
+---
+
+## Quickstart
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/revunix/StreamerNotify.git
-cd StreamerNotify
+cd streamernotify
 ```
 
-## Configuration
+### 2. Adjust Configuration (in `docker-compose.yml`)
 
-Edit the `docker-compose.yml` file to include your environment variables:
+All configuration is managed via environment variables inside your `docker-compose.yml`.  
 
+**Example section:**
 ```yaml
-services:
-  app:
-    container_name: StreamerNotify
-    build: .
     environment:
-      TELEGRAM_TOKEN: "your_telegram_bot_token"
-      TELEGRAM_CHATID: "your_telegram_chat_id"
-      # Twitch settings
-      ENABLE_TWITCH: "true"                        # Set to "false" to disable Twitch monitoring
-      TWITCH_CLIENT_ID: "your_twitch_client_id"
-      TWITCH_CLIENT_SECRET: "your_twitch_client_secret"
-      TWITCH_STREAMERS: "streamer1,streamer2"
-      # Kick settings
-      ENABLE_KICK: "true"                          # Set to "false" to disable Kick monitoring
-      KICK_CLIENT_ID: "your_kick_client_id"
-      KICK_CLIENT_SECRET: "your_kick_client_secret"
-      KICK_STREAMERS: "streamerA,streamerB"
-      # Message template (customize the notification)
+      TELEGRAM_TOKEN: "YOUR_TELEGRAM_TOKEN"
+      TELEGRAM_CHATID: "YOUR_TELEGRAM_CHAT_ID"
+      ENABLE_TWITCH: "true"
+      TWITCH_CLIENT_ID: "YOUR_TWITCH_CLIENT_ID"
+      TWITCH_CLIENT_SECRET: "YOUR_TWITCH_CLIENT_SECRET"
+      TWITCH_STREAMERS: "YOUR_TWITCH_STREAMERS,YOUR_TWITCH_STREAMERS_2"
+      ENABLE_KICK: "true"
+      KICK_CLIENT_ID: "YOUR_KICK_CLIENT_ID"
+      KICK_CLIENT_SECRET: "YOUR_KICK_CLIENT_SECRET"
+      KICK_STREAMERS: "YOUR_KICK_STREAMERS,YOUR_KICK_STREAMERS_2"
+      ENABLE_DISCORD: "true"
+      DISCORD_WEBHOOK_URLS: "YOUR_DISCORD_WEBHOOK_URL"
       MESSAGE_TEMPLATE: |
-        🟢 Platform: *{platform}*
         👤 Streamer: *{user_name}*
         🎮 Currently playing: *{game_name}*
         👀 Viewers: *{viewer_count}*
 
-        🔴 [Watch here]({user_url})
-      DISABLE_WEB_PAGE_PREVIEW: "true"
-    network_mode: bridge
-    restart: unless-stopped
+        🔴 [Watch on {platform}]({user_url})
 ```
 
-### Environment Variables
+**Notes:**
+- Multiple chat IDs, streamer names, or webhook URLs are comma-separated.
+- The `MESSAGE_TEMPLATE` can be customized. Use `{user_name}`, `{game_name}`, `{viewer_count}`, `{platform}`, and `{user_url}` as placeholders.
+- All environment variables can be set directly in `docker-compose.yml` under the `environment` section.
 
-| Variable                   | Description                                               |
-|----------------------------|-----------------------------------------------------------|
-| TELEGRAM_TOKEN             | Telegram Bot API token                                    |
-| TELEGRAM_CHATID            | Telegram chat/channel ID                                  |
-| ENABLE_TWITCH              | Enable Twitch monitoring ("true" or "false")              |
-| TWITCH_CLIENT_ID           | Twitch API client ID                                      |
-| TWITCH_CLIENT_SECRET       | Twitch API client secret                                  |
-| TWITCH_STREAMERS           | Comma-separated Twitch streamer usernames                 |
-| ENABLE_KICK                | Enable Kick monitoring ("true" or "false")                |
-| KICK_CLIENT_ID             | Kick API client ID                                        |
-| KICK_CLIENT_SECRET         | Kick API client secret                                    |
-| KICK_STREAMERS             | Comma-separated Kick streamer usernames (lowercase)       |
-| MESSAGE_TEMPLATE           | Telegram message template (see above for placeholders)    |
-| DISABLE_WEB_PAGE_PREVIEW   | "true" to disable Telegram link previews                  |
+---
 
-#### Placeholders for `MESSAGE_TEMPLATE`:
-- `{platform}`: Platform name (Twitch/Kick)
-- `{user_name}`: Streamer username
-- `{game_name}`: Current game/category
-- `{viewer_count}`: Number of viewers
-- `{user_url}`: URL to the stream
+### 3. Build & Run
 
-## Running the Application
+```bash
+docker compose up -d --build
+```
 
-### With Docker Compose
+---
 
-1. Build and start the container:
-    ```bash
-    docker compose -p StreamerNotify up -d --build
-    ```
+### 4. Health Check
 
-2. Stop the container:
-    ```bash
-    docker compose -p StreamerNotify down
-    ```
+The service exposes a health endpoint for monitoring:
+
+```
+GET http://localhost:3000/health
+```
+
+---
+
+## Configuration Reference
+
+| Variable                | Description                                                      | Required        |
+|-------------------------|------------------------------------------------------------------|-----------------|
+| TELEGRAM_TOKEN          | Telegram bot token                                               | Yes (for Telegram) |
+| TELEGRAM_CHATID         | Chat ID(s) to send notifications to (comma-separated)            | Yes (for Telegram) |
+| ENABLE_TWITCH           | Enable Twitch notifications ("true"/"false")                     | Optional (default: true) |
+| TWITCH_CLIENT_ID        | Twitch API client ID                                             | Yes (for Twitch) |
+| TWITCH_CLIENT_SECRET    | Twitch API secret                                                | Yes (for Twitch) |
+| TWITCH_STREAMERS        | Twitch streamer usernames (comma-separated, case-sensitive)      | Yes (for Twitch) |
+| ENABLE_KICK             | Enable Kick notifications ("true"/"false")                       | Optional (default: true) |
+| KICK_CLIENT_ID          | Kick API client ID (*optional, depends on implementation*)       | Yes (for Kick)   |
+| KICK_CLIENT_SECRET      | Kick API secret (*optional, depends on implementation*)          | Yes (for Kick)   |
+| KICK_STREAMERS          | Kick streamer usernames (comma-separated, lowercase)             | Yes (for Kick)   |
+| ENABLE_DISCORD          | Enable Discord notifications ("true"/"false")                    | Optional (default: false) |
+| DISCORD_WEBHOOK_URLS    | Discord webhook URL(s) (comma-separated)                         | Yes (for Discord)|
+| CHECK_INTERVAL_MS       | How often to check for live status (in milliseconds)             | Optional (default: 60000) |
+| MESSAGE_TEMPLATE        | Notification message template (see above for placeholders)        | Optional        |
+
+---
+
+## Logging
+
+- Logs are colorized for readability (INFO, WARN, ERROR, etc.).
+- You can set `LOG_LEVEL` (e.g. "info", "debug") via environment variables if needed.
+
+---
+
+## Health Endpoint
+
+- The service listens on port 3000 for `/health` requests.
+- Useful for Docker healthchecks and uptime monitoring.
+
+---
+
+## Extending
+
+- To add more notification targets (e.g. Slack), see `notifier.js`.
+- To customize notifications, adjust the `MESSAGE_TEMPLATE`.
+
+---
 
 ## License
 
-This project is licensed under the GPL-3.0 License. See the `LICENSE` file for more details.
+MIT
+
+---
+
+**Questions or suggestions?**  
+Open an [issue](https://github.com/revunix/StreamerNotify/issues) or submit a pull request!
